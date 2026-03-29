@@ -191,6 +191,23 @@ body {
   color: var(--amber);
 }
 
+.hud-home {
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.hud-home:hover {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
 .stat-bars {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -710,6 +727,70 @@ body {
 <body>
 <div id="app">
 
+<!-- HELP SCREEN -->
+<div id="help-screen" class="screen">
+  <h2 style="color:var(--amber);margin-bottom:8px;">How to Play</h2>
+  
+  <div class="narrative-card mt16">
+    <h3 style="color:var(--amber);font-size:0.95rem;margin-bottom:10px;">Objective</h3>
+    <p>Survive 2-3 weeks as a low-income individual trying to eat nutritiously while managing work, family, and budget constraints.</p>
+  </div>
+
+  <div class="narrative-card">
+    <h3 style="color:var(--amber);font-size:0.95rem;margin-bottom:10px;">Core Stats</h3>
+    <p><strong style="color:var(--amber);">Energy</strong> — Depleted by work and travel. Rest to recover.</p>
+    <p class="mt8"><strong style="color:var(--green);">Health</strong> — Declines with poor nutrition. Eat well to maintain.</p>
+    <p class="mt8"><strong style="color:var(--red);">Stress</strong> — Rises with life events. Balance is key.</p>
+    <p class="mt8"><strong style="color:var(--steel);">Nutrition</strong> — Daily food quality. Aim for balanced meals.</p>
+  </div>
+
+  <div class="narrative-card">
+    <h3 style="color:var(--amber);font-size:0.95rem;margin-bottom:10px;">Resources</h3>
+    <p><strong style="color:var(--green);">SNAP</strong> — Monthly benefits for groceries. Resets on payday.</p>
+    <p class="mt8"><strong style="color:var(--amber);">Cash</strong> — Earned income. Use for transit, emergencies, and items SNAP won't cover.</p>
+  </div>
+
+  <div class="narrative-card">
+    <h3 style="color:var(--amber);font-size:0.95rem;margin-bottom:10px;">Gameplay Loop</h3>
+    <p>Each day you will:</p>
+    <ul style="margin:10px 0 10px 20px;color:var(--text-dim);line-height:1.8;">
+      <li>Check for random events (work, family, health)</li>
+      <li>Decide whether to shop for food</li>
+      <li>Choose a store (corner store, dollar store, or grocery)</li>
+      <li>Buy food with SNAP and cash</li>
+      <li>Eat from your pantry, manage stats</li>
+      <li>Progress to the next day</li>
+    </ul>
+  </div>
+
+  <div class="narrative-card">
+    <h3 style="color:var(--amber);font-size:0.95rem;margin-bottom:10px;">Learning Objectives</h3>
+    <p>By playing this simulation, you will:</p>
+    <ul style="margin:10px 0 10px 20px;color:var(--text-dim);line-height:1.8;">
+      <li>Experience the <strong style="color:var(--amber);">time poverty</strong> that limits food choices for working families</li>
+      <li>Understand the <strong style="color:var(--amber);">convenience premium</strong> — paying more for food because grocery stores are far away</li>
+      <li>Feel how <strong style="color:var(--amber);">stress and decision fatigue</strong> erode willpower</li>
+      <li>Recognize why "just eat healthier" is inadequate advice without addressing systemic barriers</li>
+      <li>Gain empathy for the complex trade-offs faced by SNAP recipients</li>
+    </ul>
+  </div>
+
+  <div class="narrative-card">
+    <h3 style="color:var(--amber);font-size:0.95rem;margin-bottom:10px;">The Hidden Forces</h3>
+    <p>As you play, the game will reveal data about systemic factors affecting food access:</p>
+    <ul style="margin:10px 0 10px 20px;color:var(--text-dim);line-height:1.8;">
+      <li>The "convenience premium" — extra costs at corner stores</li>
+      <li>Time poverty and meal preparation</li>
+      <li>Stress-food feedback loops</li>
+      <li>Decision fatigue in poverty</li>
+    </ul>
+    <p class="mt8" style="color:var(--text-dim);font-style:italic;">Pay attention to the "SYSTEM DATA" reveals — they contain research-backed insights.</p>
+  </div>
+
+  <button class="btn mt24" onclick="G.showCharSelect()">Start Playing</button>
+  <button class="btn btn-dim mt8" onclick="G.showScreen('title-screen')">Back to Home</button>
+</div>
+
 <!-- TITLE SCREEN -->
 <div id="title-screen" class="screen active">
   <p class="subtitle mono">An Educational Simulation &bull; SNAP-Ed</p>
@@ -723,8 +804,9 @@ body {
   </p>
   <button class="btn" onclick="G.showCharSelect()">Begin Simulation</button>
   <p class="mono-sm text-dim mt24">2&ndash;3 weeks of gameplay &bull; No account required</p>
+  <p class="mt16"><a href="#" onclick="G.showHelp(); return false;" class="mono-sm" style="color:var(--steel);text-decoration:underline;">How to Play &amp; Learning Objectives</a></p>
   <p class="mono-sm mt24" style="color:var(--border);font-size:0.62rem;letter-spacing:0.05em;">
-    Concept developed in collaboration with
+    Conceptualization and design by
     <a href="https://www.linkedin.com/in/beingbabu/" target="_blank" rel="noopener"
        style="color:var(--text-dim);text-decoration:underline;text-underline-offset:3px;">Prof. Babu George</a>
   </p>
@@ -748,6 +830,7 @@ body {
     <div class="hud-top">
       <span class="hud-name" id="hud-name"></span>
       <span class="hud-day mono" id="hud-day"></span>
+      <span class="hud-home" id="hud-home" title="Return to title screen">⏎ Home</span>
     </div>
     <div class="stat-bars">
       <div class="stat-bar-wrap">
@@ -1179,10 +1262,21 @@ G.init = function() {
     div.onclick = () => G.startGame(c.id);
     grid.appendChild(div);
   });
+
+  // Home button handler
+  document.getElementById('hud-home').onclick = () => {
+    if (confirm('Return to title screen? Your progress will be lost.')) {
+      G.showScreen('title-screen');
+    }
+  };
 };
 
 G.showCharSelect = function() {
   G.showScreen('char-select-screen');
+};
+
+G.showHelp = function() {
+  G.showScreen('help-screen');
 };
 
 G.startGame = function(charId) {
