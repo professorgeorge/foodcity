@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Food City: The Invisible Forces Simulator</title>
+<style>
+:root {
+  --bg: #111111;
+  --surface: #1a1a1a;
+  --surface2: #222222;
+  --border: #2e2e2e;
+  --text: #E8E0D0;
+  --text-dim: #9A9080;
+  --amber: #F5A623;
+  --amber-dim: #8a5d14;
+  --steel: #5B8DB8;
+  --steel-dim: #2a4a6b;
+  --green: #4CAF7D;
+  --red: #C0392B;
+  --yellow: #F0C040;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Georgia, 'Times New Roman', serif;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+.mono { font-family: 'Courier New', Courier, monospace; }
+
+#app { max-width: 800px; margin: 0 auto; padding: 16px; }
+
+/* SCREENS */
+.screen { display: none !important; }
+.screen.active { display: block !important; }
+#title-screen.screen.active { display: flex !important; }
+
+/* TITLE */
+#title-screen {
+  text-align: center;
+  padding: 60px 20px;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 40px,
+    rgba(245,166,35,0.03) 40px,
+    rgba(245,166,35,0.03) 41px
+  );
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#title-screen h1 {
+  font-size: 2.2rem;
+  color: var(--amber);
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+#title-screen .subtitle {
+  font-family: 'Courier New', monospace;
+  color: var(--steel);
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+
+#title-screen .thesis {
+  max-width: 560px;
+  margin: 0 auto 48px;
+  font-size: 1.05rem;
+  color: var(--text-dim);
+  font-style: italic;
+  line-height: 1.8;
+}
+
+/* BUTTONS */
+.btn {
+  display: inline-block;
+  padding: 12px 28px;
+  border: 1px solid var(--amber);
+  background: transparent;
+  color: var(--amber);
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn:hover { background: var(--amber); color: var(--bg); }
+.btn-steel {
+  border-color: var(--steel);
+  color: var(--steel);
+}
+.btn-steel:hover { background: var(--steel); color: var(--bg); }
+.btn-dim {
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+.btn-dim:hover { background: var(--surface2); color: var(--text); }
+.btn-full { display: block; width: 100%; text-align: center; }
+
+/* CHAR SELECT */
+.char-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.char-card {
+  border: 1px solid var(--border);
+  padding: 20px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  background: var(--surface);
+}
+.char-card:hover { border-color: var(--amber); }
+
+.char-card h3 {
+  color: var(--amber);
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.char-card .char-meta {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: var(--steel);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.char-card p {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.char-card .challenge {
+  margin-top: 10px;
+  padding: 8px;
+  background: rgba(245,166,35,0.06);
+  border-left: 2px solid var(--amber-dim);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* HUD */
+#hud {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 0;
+  z-index: 10;
+  margin-bottom: 20px;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.hud-name {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: var(--steel);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.hud-day {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: var(--amber);
+}
+
+.stat-bars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.stat-bar-wrap { font-size: 0; }
+
+.stat-label {
+  font-family: 'Courier New', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.stat-label span { color: var(--text); }
+
+.bar {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  transition: width 0.4s ease, background 0.4s;
+  border-radius: 2px;
+}
+
+.bar-energy .bar-fill { background: var(--amber); }
+.bar-health .bar-fill { background: var(--green); }
+.bar-stress .bar-fill { background: var(--red); }
+.bar-nutrition .bar-fill { background: var(--steel); }
+
+.resources-row {
+  display: flex;
+  gap: 20px;
+  margin-top: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+}
+
+.res-label { color: var(--text-dim); }
+.res-val { color: var(--text); }
+.res-snap { color: var(--green); }
+.res-cash { color: var(--amber); }
+
+/* PHASE DISPLAY */
+.phase-label {
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--steel);
+  margin-bottom: 16px;
+}
+
+/* CARD */
+.narrative-card {
+  border: 1px solid var(--border);
+  padding: 24px;
+  margin-bottom: 16px;
+  background: var(--surface);
+}
+
+.narrative-card h2 {
+  font-size: 1.2rem;
+  color: var(--amber);
+  margin-bottom: 12px;
+}
+
+.narrative-card p {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+
+.narrative-card p:last-child { margin-bottom: 0; }
+
+/* CHOICE BUTTONS */
+.choices { display: flex; flex-direction: column; gap: 8px; }
+
+.choice-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: Georgia, serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+}
+
+.choice-btn:hover {
+  border-color: var(--amber);
+  background: rgba(245,166,35,0.05);
+}
+
+.choice-cost {
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.choice-text { flex: 1; }
+
+/* DATA REVEAL */
+.data-reveal {
+  border: 1px solid var(--steel-dim);
+  padding: 20px;
+  margin: 20px 0;
+  background: rgba(91,141,184,0.05);
+  position: relative;
+}
+
+.data-reveal::before {
+  content: 'SYSTEM DATA';
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--bg);
+  padding: 0 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--steel);
+}
+
+.data-reveal h3 {
+  color: var(--steel);
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+
+.data-reveal p {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  line-height: 1.65;
+  margin-bottom: 8px;
+}
+
+.data-highlight {
+  color: var(--amber);
+  font-family: 'Courier New', monospace;
+}
+
+/* SHOPPING MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  max-width: 620px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.modal h2 {
+  font-size: 1.1rem;
+  color: var(--amber);
+  margin-bottom: 4px;
+}
+
+.store-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 16px 0;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.store-tab {
+  padding: 8px 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: var(--text-dim);
+  background: transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+}
+
+.store-tab:hover { color: var(--text); }
+.store-tab.active {
+  border-color: var(--border);
+  border-bottom-color: var(--surface);
+  color: var(--amber);
+  background: var(--surface);
+}
+
+.store-info {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.store-info span { color: var(--text); }
+
+.food-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.food-item {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  position: relative;
+}
+
+.food-item:hover { border-color: var(--amber); }
+.food-item.in-cart { border-color: var(--green); background: rgba(76,175,125,0.05); }
+.food-item.unavailable { opacity: 0.4; cursor: not-allowed; }
+
+.food-item-name {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.food-item-meta {
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  display: flex;
+  justify-content: space-between;
+}
+
+.food-price { color: var(--amber); }
+.food-nutrition { color: var(--steel); }
+
+.cart-section {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 8px;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+}
+
+.cart-item-remove {
+  color: var(--red);
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 0.9rem;
+}
+
+.cart-total {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  padding: 8px 0;
+  color: var(--text);
+}
+
+.cart-snap { color: var(--green); }
+.cart-cash { color: var(--amber); }
+
+/* PANTRY */
+.pantry-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.pantry-item {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  font-size: 0.8rem;
+}
+
+.pantry-item-name { color: var(--text); margin-bottom: 2px; }
+.pantry-item-meta {
+  font-family: 'Courier New', monospace;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+/* RECAP */
+.recap-card {
+  border: 1px solid var(--amber-dim);
+  padding: 20px;
+  background: rgba(245,166,35,0.04);
+}
+
+.recap-card h2 { color: var(--amber); margin-bottom: 12px; }
+
+.recap-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.recap-stat {
+  text-align: center;
+  padding: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.recap-stat-val {
+  font-family: 'Courier New', monospace;
+  font-size: 1.4rem;
+  color: var(--amber);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.recap-stat-label {
+  font-family: 'Courier New', monospace;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+/* WEEK SUMMARY */
+.summary-section {
+  margin-bottom: 24px;
+}
+
+.summary-section h3 {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--steel);
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+/* SYSTEM FLIP */
+.flip-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.flip-card {
+  border: 1px solid var(--border);
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--surface);
+}
+
+.flip-card:hover, .flip-card.selected {
+  border-color: var(--amber);
+  background: rgba(245,166,35,0.06);
+}
+
+.flip-card h3 { color: var(--amber); font-size: 0.95rem; margin-bottom: 8px; }
+.flip-card p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
+
+/* END SCREEN */
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.compare-col h3 {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(46,46,46,0.5);
+}
+
+.compare-label { color: var(--text-dim); }
+.compare-val { color: var(--text); }
+.compare-better { color: var(--green); }
+.compare-worse { color: var(--red); }
+
+.final-insight {
+  border: 1px solid var(--amber-dim);
+  padding: 24px;
+  background: rgba(245,166,35,0.04);
+  margin: 24px 0;
+  font-style: italic;
+  line-height: 1.8;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+/* LOG */
+.log-entry {
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(46,46,46,0.4);
+}
+.log-entry .log-time { color: var(--steel); margin-right: 8px; }
+
+/* SECTION HEADERS */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 1.1rem;
+  color: var(--amber);
+}
+
+.section-header .step-label {
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* UTILITY */
+.mt8 { margin-top: 8px; }
+.mt16 { margin-top: 16px; }
+.mt24 { margin-top: 24px; }
+.mb8 { margin-bottom: 8px; }
+.mb16 { margin-bottom: 16px; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.text-amber { color: var(--amber); }
+.text-steel { color: var(--steel); }
+.text-dim { color: var(--text-dim); }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
+.text-sm { font-size: 0.82rem; }
+.mono-sm { font-family: 'Courier New', monospace; font-size: 0.75rem; }
+.italic { font-style: italic; }
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 20px 0;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid;
+}
+
+.tag-week3 { border-color: var(--green); color: var(--green); }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TITLE SCREEN -->
+<div id="title-screen" class="screen active">
+  <p class="subtitle mono">An Educational Simulation &bull; SNAP-Ed</p>
+  <h1>Food City</h1>
+  <p class="subtitle mono">The Invisible Forces Simulator</p>
+  <p class="thesis">
+    This simulation will show you something researchers have documented for decades:
+    the foods people eat are shaped less by willpower and values than by the systems
+    surrounding them. Time. Distance. Stress. Price. Transit. This is not a theory.
+    You will feel it.
+  </p>
+  <button class="btn" onclick="G.showCharSelect()">Begin Simulation</button>
+  <p class="mono-sm text-dim mt24">2&ndash;3 weeks of gameplay &bull; No account required</p>
+  <p class="mono-sm mt24" style="color:var(--border);font-size:0.62rem;letter-spacing:0.05em;">
+    Concept developed in collaboration with
+    <a href="https://www.linkedin.com/in/beingbabu/" target="_blank" rel="noopener"
+       style="color:var(--text-dim);text-decoration:underline;text-underline-offset:3px;">Prof. Babu George</a>
+  </p>
+</div>
+
+<!-- CHARACTER SELECT -->
+<div id="char-select-screen" class="screen">
+  <div class="section-header">
+    <div>
+      <div class="step-label">Step 01</div>
+      <h2>Choose Your Household</h2>
+    </div>
+  </div>
+  <p class="text-dim text-sm mb16">Each household faces different structural barriers. Your choices don't change who they are; they change what's possible.</p>
+  <div class="char-grid" id="char-grid"></div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen" class="screen">
+  <div id="hud">
+    <div class="hud-top">
+      <span class="hud-name" id="hud-name"></span>
+      <span class="hud-day mono" id="hud-day"></span>
+    </div>
+    <div class="stat-bars">
+      <div class="stat-bar-wrap">
+        <div class="stat-label">Energy <span id="hud-energy-val"></span></div>
+        <div class="bar bar-energy"><div class="bar-fill" id="hud-energy"></div></div>
+      </div>
+      <div class="stat-bar-wrap">
+        <div class="stat-label">Health <span id="hud-health-val"></span></div>
+        <div class="bar bar-health"><div class="bar-fill" id="hud-health"></div></div>
+      </div>
+      <div class="stat-bar-wrap">
+        <div class="stat-label">Stress <span id="hud-stress-val"></span></div>
+        <div class="bar bar-stress"><div class="bar-fill" id="hud-stress"></div></div>
+      </div>
+      <div class="stat-bar-wrap">
+        <div class="stat-label">Nutrition <span id="hud-nutrition-val"></span></div>
+        <div class="bar bar-nutrition"><div class="bar-fill" id="hud-nutrition"></div></div>
+      </div>
+    </div>
+    <div class="resources-row">
+      <span class="res-label">SNAP</span>
+      <span class="res-val res-snap" id="hud-snap"></span>
+      <span class="res-label">Cash</span>
+      <span class="res-val res-cash" id="hud-cash"></span>
+    </div>
+  </div>
+
+  <div id="reveal-banner" style="display:none;"></div>
+  <div id="game-content"></div>
+</div>
+
+<!-- SHOPPING MODAL -->
+<div id="shopping-modal" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <div class="flex-between mb16">
+      <h2>Grocery Run</h2>
+      <button class="btn btn-dim" onclick="G.closeShop()" style="padding:6px 14px;font-size:0.7rem;">Close</button>
+    </div>
+    <div class="store-tabs" id="store-tabs"></div>
+    <div id="store-details"></div>
+    <div class="food-grid" id="food-grid"></div>
+    <div class="cart-section">
+      <div class="mono-sm text-dim mb8">Cart</div>
+      <div id="cart-items"></div>
+      <div class="cart-total" id="cart-total"></div>
+      <button class="btn btn-full mt8" id="checkout-btn" onclick="G.checkout()">Checkout</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===== GAME DATA =====
+
+const CHARACTERS = {
+  maria: {
+    id: 'maria',
+    name: 'Maria Reyes',
+    age: 34,
+    role: 'Single parent, 2 kids, retail 28hrs/wk',
+    income: 1300,
+    snap: 658,
+    hasCar: false,
+    challenge: 'Time is the real currency. Kids need breakfast before school, dinner before homework, and she works split shifts.',
+    startEnergy: 62,
+    startStress: 45,
+    startHealth: 68,
+    filterEvents: ['kid_sick']
+  },
+  james: {
+    id: 'james',
+    name: 'James Walker',
+    age: 67,
+    role: 'Retired, Social Security, arthritis/cane',
+    income: 1100,
+    snap: 281,
+    hasCar: false,
+    challenge: 'Mobility limits every trip. The corner store is technically close enough, but those prices have a cost too.',
+    startEnergy: 48,
+    startStress: 35,
+    startHealth: 55,
+    filterEvents: ['diabetes_check', 'overtime_offer']
+  },
+  keisha: {
+    id: 'keisha',
+    name: 'Keisha Brown',
+    age: 19,
+    role: 'Community college + gas station nights',
+    income: 820,
+    snap: 291,
+    hasCar: false,
+    challenge: 'Exhaustion is the constant. She studies in the morning, works until midnight, and has no reliable schedule.',
+    startEnergy: 55,
+    startStress: 65,
+    startHealth: 72,
+    filterEvents: ['kid_sick', 'school_supplies', 'diabetes_check']
+  },
+  roberto: {
+    id: 'roberto',
+    name: 'Roberto Santos',
+    age: 45,
+    role: 'Construction, Type 2 diabetes diagnosis',
+    income: 2200,
+    snap: 0,
+    hasCar: true,
+    challenge: 'Income puts him just over the SNAP line, but construction leaves him exhausted and his new diagnosis means what he eats now matters more than ever.',
+    startEnergy: 60,
+    startStress: 55,
+    startHealth: 60,
+    filterEvents: ['kid_sick', 'school_supplies']
+  }
+};
+
+const STORES = {
+  pak: {
+    id: 'pak',
+    name: 'Pak-N-Go Corner Store',
+    transitTime: 0,
+    transitCost: 0,
+    multiplier: 1.6,
+    snapAccepted: true,
+    description: 'No transit needed. But the prices reflect it.',
+    availableItems: ['rice', 'bread', 'eggs', 'ramen', 'chips', 'soda', 'canned_beans', 'peanut_butter', 'frozen_burrito', 'juice_box']
+  },
+  dollar: {
+    id: 'dollar',
+    name: 'Dollar Deals Market',
+    transitTime: 1,
+    transitCost: 1.75,
+    multiplier: 1.25,
+    snapAccepted: true,
+    description: '1 bus, $1.75 each way. Mostly shelf-stable. Better than corner prices.',
+    availableItems: ['rice', 'bread', 'eggs', 'oats', 'ramen', 'canned_beans', 'peanut_butter', 'pasta', 'canned_tuna', 'applesauce', 'frozen_peas']
+  },
+  metro: {
+    id: 'metro',
+    name: 'Metro Grocery',
+    transitTime: 4.5,
+    transitCost: 3.50,
+    multiplier: 0.85,
+    snapAccepted: true,
+    description: '2 buses, 45 min each way. Full selection, best prices.',
+    availableItems: ['rice', 'bread', 'eggs', 'oats', 'pasta', 'canned_beans', 'peanut_butter', 'frozen_peas', 'spinach', 'carrots', 'apple', 'banana', 'chicken', 'canned_tuna', 'lentils', 'applesauce', 'yogurt', 'milk', 'cheese', 'whole_grain_cereal']
+  }
+};
+
+const FOODS = {
+  rice: { name: 'Rice (2lb bag)', basePrice: 2.50, nutrition: 45, prepTime: 0.5, calories: 1600, shelf: 90, servings: 8, category: 'grain', snapOk: true },
+  bread: { name: 'Whole Wheat Bread', basePrice: 3.50, nutrition: 50, prepTime: 0, calories: 1200, shelf: 7, servings: 12, category: 'grain', snapOk: true },
+  eggs: { name: 'Eggs (dozen)', basePrice: 3.20, nutrition: 72, prepTime: 0.2, calories: 840, shelf: 21, servings: 12, category: 'protein', snapOk: true },
+  oats: { name: 'Rolled Oats (1lb)', basePrice: 2.80, nutrition: 68, prepTime: 0.25, calories: 1800, shelf: 180, servings: 10, category: 'grain', snapOk: true },
+  pasta: { name: 'Pasta (1lb)', basePrice: 1.80, nutrition: 40, prepTime: 0.4, calories: 1600, shelf: 730, servings: 8, category: 'grain', snapOk: true },
+  canned_beans: { name: 'Canned Beans', basePrice: 1.20, nutrition: 78, prepTime: 0.1, calories: 380, shelf: 730, servings: 4, category: 'protein', snapOk: true },
+  peanut_butter: { name: 'Peanut Butter (16oz)', basePrice: 4.00, nutrition: 65, prepTime: 0, calories: 2800, shelf: 120, servings: 16, category: 'protein', snapOk: true },
+  frozen_peas: { name: 'Frozen Peas (1lb)', basePrice: 2.00, nutrition: 82, prepTime: 0.1, calories: 340, shelf: 180, servings: 4, category: 'produce', snapOk: true },
+  spinach: { name: 'Fresh Spinach (bag)', basePrice: 3.80, nutrition: 92, prepTime: 0.1, calories: 70, shelf: 5, servings: 4, category: 'produce', snapOk: true },
+  carrots: { name: 'Carrots (1lb)', basePrice: 1.50, nutrition: 80, prepTime: 0.1, calories: 180, shelf: 21, servings: 6, category: 'produce', snapOk: true },
+  apple: { name: 'Apples (3-pack)', basePrice: 2.80, nutrition: 72, prepTime: 0, calories: 300, shelf: 14, servings: 3, category: 'produce', snapOk: true },
+  banana: { name: 'Bananas (bunch)', basePrice: 1.40, nutrition: 70, prepTime: 0, calories: 450, shelf: 7, servings: 5, category: 'produce', snapOk: true },
+  chicken: { name: 'Chicken (1lb)', basePrice: 5.50, nutrition: 88, prepTime: 0.5, calories: 860, shelf: 3, servings: 4, category: 'protein', snapOk: true },
+  canned_tuna: { name: 'Canned Tuna', basePrice: 1.50, nutrition: 80, prepTime: 0, calories: 200, shelf: 730, servings: 2, category: 'protein', snapOk: true },
+  lentils: { name: 'Lentils (1lb)', basePrice: 2.20, nutrition: 86, prepTime: 0.6, calories: 1600, shelf: 730, servings: 8, category: 'protein', snapOk: true },
+  applesauce: { name: 'Applesauce (jar)', basePrice: 2.50, nutrition: 45, prepTime: 0, calories: 480, shelf: 60, servings: 4, category: 'produce', snapOk: true },
+  yogurt: { name: 'Yogurt (32oz)', basePrice: 4.50, nutrition: 75, prepTime: 0, calories: 560, shelf: 14, servings: 6, category: 'dairy', snapOk: true },
+  milk: { name: 'Milk (half gallon)', basePrice: 3.20, nutrition: 72, prepTime: 0, calories: 520, shelf: 10, servings: 8, category: 'dairy', snapOk: true },
+  cheese: { name: 'Cheese (8oz)', basePrice: 3.80, nutrition: 55, prepTime: 0, calories: 800, shelf: 21, servings: 8, category: 'dairy', snapOk: true },
+  whole_grain_cereal: { name: 'Whole Grain Cereal', basePrice: 4.20, nutrition: 60, prepTime: 0, calories: 1200, shelf: 90, servings: 10, category: 'grain', snapOk: true },
+  ramen: { name: 'Ramen Noodles (4pk)', basePrice: 2.00, nutrition: 15, prepTime: 0.15, calories: 1400, shelf: 365, servings: 4, category: 'grain', snapOk: true },
+  chips: { name: 'Chips (family bag)', basePrice: 4.50, nutrition: 8, prepTime: 0, calories: 1200, shelf: 14, servings: 4, category: 'grain', snapOk: true },
+  soda: { name: 'Soda (2-liter)', basePrice: 2.20, nutrition: 0, prepTime: 0, calories: 840, shelf: 90, servings: 8, category: 'grain', snapOk: false },
+  juice_box: { name: 'Juice Boxes (8pk)', basePrice: 4.00, nutrition: 20, prepTime: 0, calories: 960, shelf: 90, servings: 8, category: 'produce', snapOk: true },
+  frozen_burrito: { name: 'Frozen Burritos (4pk)', basePrice: 5.50, nutrition: 22, prepTime: 0.1, calories: 1200, shelf: 90, servings: 4, category: 'grain', snapOk: true }
+};
+
+const EVENTS = [
+  {
+    id: 'bus_late',
+    weight: 12,
+    title: 'Bus Ran Late',
+    text: (c) => `The ${c.hasCar ? 'delivery truck blocked the driveway' : 'bus ran 40 minutes late'}. You got to work on time but only because you skipped the errand you had planned.`,
+    apply: (S) => { S.energy = Math.max(0, S.energy - 10); S.stress = Math.min(100, S.stress + 12); S.stats.transitHours += 0.7; },
+    choices: null
+  },
+  {
+    id: 'kid_sick',
+    weight: 8,
+    charFilter: ['maria'],
+    title: 'One of the Kids is Sick',
+    text: () => `Marcus woke up with a fever. You called the school. Now the question is whether you can get him to his aunt's, make it to your shift on time, and still find something for him to eat that isn't crackers.`,
+    apply: (S) => { S.energy = Math.max(0, S.energy - 18); S.stress = Math.min(100, S.stress + 25); S.cash = Math.max(0, S.cash - 12); },
+    choices: null
+  },
+  {
+    id: 'extra_shift',
+    weight: 10,
+    title: 'Extra Shift Offered',
+    text: () => `Your supervisor texted: someone called out, can you cover half a shift? It's two more hours of pay, but you'd get home at 9pm.`,
+    choices: [
+      { text: 'Take the shift (need the money)', apply: (S) => { S.cash += 28; S.energy = Math.max(0, S.energy - 20); S.stress = Math.min(100, S.stress + 15); S.stats.convenienceCount++; } },
+      { text: 'Decline (you\'re running low)', apply: (S) => { S.energy = Math.min(100, S.energy + 5); S.stress = Math.max(0, S.stress - 5); } }
+    ]
+  },
+  {
+    id: 'snap_declined',
+    weight: 6,
+    title: 'SNAP Card Declined at Register',
+    text: () => `The card reader said "insufficient funds." There was a line behind you. The cashier waited. You knew you had balance, but the system sometimes has lag or holds around the first of the month.`,
+    apply: (S) => { S.stress = Math.min(100, S.stress + 30); S.stats.stressChoiceCount++; S.energy = Math.max(0, S.energy - 8); },
+    choices: null
+  },
+  {
+    id: 'donuts',
+    weight: 9,
+    title: 'Donuts in the Break Room',
+    text: () => `Someone left donuts in the break room. You skipped breakfast this morning. Your next actual break is in three hours. The donuts are right there.`,
+    choices: [
+      { text: 'Eat one (you\'re hungry)', apply: (S) => { S.energy = Math.min(100, S.energy + 8); S.todayNutrition = Math.max(0, S.todayNutrition - 5); S.stats.stressChoiceCount++; } },
+      { text: 'Skip it (you\'re trying)', apply: (S) => { S.stress = Math.min(100, S.stress + 8); } }
+    ]
+  },
+  {
+    id: 'food_spoiled',
+    weight: 8,
+    title: 'Food Went Bad',
+    text: () => `You opened the fridge and found the spinach you bought on Monday has turned. It happens. Fresh produce doesn't keep long, especially when you don't cook as much as you planned.`,
+    apply: (S) => {
+      const fresh = S.pantry.filter(i => i.id === 'spinach' || i.id === 'chicken' || i.id === 'bread');
+      if (fresh.length > 0) {
+        S.pantry = S.pantry.filter(i => i !== fresh[0]);
+        S.stress = Math.min(100, S.stress + 10);
+      } else {
+        S.stress = Math.min(100, S.stress + 5);
+      }
+    },
+    choices: null
+  },
+  {
+    id: 'payday',
+    weight: 0,
+    forced: true,
+    title: 'Payday',
+    text: (c) => `Paycheck deposited. ${c.snap > 0 ? 'Your SNAP balance reset too.' : ''}`,
+    apply: (S, c) => {
+      S.cash += Math.round(c.income / 2);
+      if (c.snap > 0) S.snap = c.snap;
+    },
+    choices: null
+  },
+  {
+    id: 'utility_bill',
+    weight: 0,
+    forced: true,
+    title: 'Utility Bill',
+    text: () => `Electric bill came. $87. Higher than last month because of the heat.`,
+    apply: (S) => { S.cash = Math.max(0, S.cash - 87); S.stress = Math.min(100, S.stress + 12); },
+    choices: null
+  },
+  {
+    id: 'coupon',
+    weight: 8,
+    title: 'Found a Coupon',
+    text: () => `There was a coupon in the mail: $1.50 off any produce item at Metro Grocery. Might actually be worth the bus ride.`,
+    apply: (S) => { S.couponActive = true; },
+    choices: null
+  },
+  {
+    id: 'community_meal',
+    weight: 6,
+    title: 'Community Meal at Church',
+    text: () => `The church two blocks over is doing a community dinner tonight. Hot meal, free, no questions asked.`,
+    choices: [
+      { text: 'Go (save money tonight)', apply: (S) => { S.todayNutrition = Math.min(100, S.todayNutrition + 30); S.energy = Math.min(100, S.energy + 10); S.cash += 6; } },
+      { text: 'Skip (too tired)', apply: (S) => { S.energy = Math.min(100, S.energy + 5); } }
+    ]
+  },
+  {
+    id: 'school_supplies',
+    weight: 5,
+    charFilter: ['maria'],
+    title: 'School Supplies Bill',
+    text: () => `Marcus needs a poster board and colored markers for his science project. It's $14. You'd planned to spend that on groceries this week.`,
+    apply: (S) => { S.cash = Math.max(0, S.cash - 14); S.stress = Math.min(100, S.stress + 10); },
+    choices: null
+  },
+  {
+    id: 'neighbor_produce',
+    weight: 5,
+    title: 'Neighbor\'s Garden',
+    text: () => `Your neighbor left a bag of zucchini and tomatoes outside your door. More than she can use.`,
+    apply: (S) => {
+      S.pantry.push({ id: 'spinach', name: 'Garden Produce', servings: 4, nutrition: 88, expiresDay: S.day + 5 });
+      S.todayNutrition = Math.min(100, S.todayNutrition + 10);
+    },
+    choices: null
+  },
+  {
+    id: 'quiet_day',
+    weight: 10,
+    title: 'Quiet Day',
+    text: () => `Nothing unexpected happened today. A rare thing. The ordinary texture of a functional week.`,
+    apply: (S) => { S.energy = Math.min(100, S.energy + 8); S.stress = Math.max(0, S.stress - 10); },
+    choices: null
+  },
+  {
+    id: 'diabetes_check',
+    weight: 5,
+    charFilter: ['roberto'],
+    title: 'Doctor\'s Appointment',
+    text: () => `Your A1C came back: 8.1. Your doctor was direct: the foods you eat every day are what move that number. She handed you a list. Half the items on it aren't available at the corner store.`,
+    apply: (S) => { S.stress = Math.min(100, S.stress + 20); S.health = Math.max(0, S.health - 3); S.stats.stressChoiceCount++; },
+    choices: null
+  },
+  {
+    id: 'store_sale',
+    weight: 7,
+    title: 'Sale at Dollar Deals',
+    text: () => `Dollar Deals has eggs and oats on sale this week, 30% off. Small thing. But it helps.`,
+    apply: (S) => { S.saleItem = 'eggs'; S.saleItem2 = 'oats'; },
+    choices: null
+  }
+];
+
+const HIDDEN_FORCES = {
+  cornerTrap: {
+    id: 'cornerTrap',
+    title: 'The Convenience Premium',
+    trigger: (S) => S.stats.cornerVisits >= 4 && !S.revealedForces.includes('cornerTrap'),
+    text: `You've visited Pak-N-Go four times. Here's what those visits actually cost: corner store prices run 40-60% higher per calorie than full grocery stores. But the full grocery store requires a 90-minute round trip, $3.50 in bus fare, and energy you may not have. Researchers call this the "convenience premium" — it's not laziness. It's rational math under real constraints. Low-income households pay, on average, $1,000-2,000 more per year for the same food basket simply because grocery stores aren't in their neighborhoods.`,
+    color: 'amber'
+  },
+  timePoverty: {
+    id: 'timePoverty',
+    title: 'Time Poverty is a Nutrition Issue',
+    trigger: (S) => S.stats.convenienceCount >= 3 && !S.revealedForces.includes('timePoverty'),
+    text: `You've made three convenience-first food choices. Nutritional guidelines assume that people have 30-60 minutes each day to prepare meals from whole ingredients. Working-class households average 2-3 hours less discretionary time per day than professional households. "Just cook more" is advice that requires 45 minutes per meal, which adds up to 270+ hours per year — time that doesn't exist when you work 50-hour weeks across two jobs.`,
+    color: 'amber'
+  },
+  stressLoop: {
+    id: 'stressLoop',
+    title: 'The Stress-Food Loop',
+    trigger: (S) => S.stats.highStressDays >= 3 && !S.revealedForces.includes('stressLoop'),
+    text: `Your stress has been elevated for several days. Chronic stress increases cortisol, which triggers cravings for high-fat, high-sugar foods. It also impairs the prefrontal cortex — the part of the brain responsible for impulse control and long-term planning. The brain isn't broken. It's responding rationally to an environment where comfort is scarce and the future feels uncertain. This is physiology, not character.`,
+    color: 'steel'
+  },
+  decisionFatigue: {
+    id: 'decisionFatigue',
+    title: 'Decision Fatigue',
+    trigger: (S) => S.day >= 5 && !S.revealedForces.includes('decisionFatigue'),
+    text: `By this point in your week, you've made roughly 200 food-related decisions — what to buy, what to cook, what to skip, whether it's worth the bus fare. Research on decision fatigue shows that cognitive capacity depletes over time. By evening, the brain defaults to familiar, easy options. This is why "just plan better" fails: planning itself consumes cognitive resources that low-income households spend on more immediate pressures (housing instability, childcare, transportation). The willpower runs out because other demands spend it first.`,
+    color: 'steel'
+  },
+  snapMath: {
+    id: 'snapMath',
+    title: 'The SNAP Calculation',
+    trigger: (S, c) => (c.snap > 0 && S.snap < c.snap * 0.3) && !S.revealedForces.includes('snapMath'),
+    text: `Your SNAP balance is running low. The federal formula for SNAP benefits assumes households spend about $6.20 per person per day on food. This calculation was developed based on Depression-era food pricing and updated with inflation adjustments, but it doesn't account for regional price variation, transportation costs to reach grocery stores, or the caloric needs of physically demanding work. A family of three at the poverty line receives approximately $6/person/day for all meals. A basic nutritious dinner for one — chicken, vegetable, grain — costs around $5 at a well-priced grocery store.`,
+    color: 'amber'
+  },
+  shelfPsych: {
+    id: 'shelfPsych',
+    title: 'Shelf Psychology',
+    trigger: (S) => (S.stats.groceryVisits >= 1 || S.stats.dollarVisits >= 1) && !S.revealedForces.includes('shelfPsych'),
+    text: `Welcome to a grocery store. The moment you walked in, a designed environment began working on your choices. Eye-level shelves are rented by food manufacturers for $25,000-$50,000 per year. Checkout lanes are lined with high-margin impulse items. "Health halo" products — items labeled organic, natural, or artisanal — are priced 25-200% higher regardless of their actual nutritional value. End caps showcase items with the highest retailer markup. None of this is coincidence. Grocery store layout is a science. Most shoppers don't know they're being managed.`,
+    color: 'steel'
+  },
+  compound: {
+    id: 'compound',
+    title: 'The Numbers Add Up',
+    trigger: (S) => S.week >= 2 && !S.revealedForces.includes('compound'),
+    text: `Two weeks in. Here's what the data shows about your situation: Transit time to a full grocery store: roughly 4-5 hours per week if you go twice. Bus fare: $7/week, $364/year. Time spent navigating food access: conservative estimate of 6-8 hours per week when combined with preparation constraints. That's equivalent to a part-time job — unpaid — just managing food access. Higher earners can solve these problems with money: grocery delivery, meal prep services, prepared food. The structural constraints compound invisibly.`,
+    color: 'amber'
+  },
+  transport: {
+    id: 'transport',
+    title: 'Transit as Food Policy',
+    trigger: (S) => S.stats.transitHours >= 4 && !S.revealedForces.includes('transport'),
+    text: `You've spent significant time on transit. Transit policy is food policy. When a city underfunds bus routes in lower-income neighborhoods, residents can't reach affordable grocery stores. When transit schedules run every 45 minutes instead of every 12, a "quick" grocery run becomes a two-hour commitment. Researchers have documented that the average "food desert" resident in the US lives 1.4 miles from the nearest supermarket — not prohibitively far for car owners, but a meaningful barrier for those without one.`,
+    color: 'steel'
+  }
+};
+
+const SYSTEM_FLIPS = [
+  {
+    id: 'new_grocery',
+    title: 'New Grocery Store Nearby',
+    description: 'A full grocery store opens 1 mile away. Walking distance, or 10 minutes by bus with no fare.',
+    apply: () => { STORES.nearbyGrocery = { ...STORES.metro, id: 'nearby', name: 'Neighborhood Grocery', transitTime: 0.25, transitCost: 0, description: 'New store, 10 min walk. Opened this month.' }; }
+  },
+  {
+    id: 'snap_match',
+    title: 'SNAP Produce Match',
+    description: 'A local program matches 50 cents for every SNAP dollar spent on produce. Fresh vegetables and fruit effectively cost half price.',
+    apply: (S) => { S.snapProduceMatch = true; }
+  },
+  {
+    id: 'free_transit',
+    title: 'Free Transit Pass',
+    description: 'Your household qualifies for a free unlimited bus pass. Transit fare is eliminated.',
+    apply: (S) => { S.freeTransit = true; }
+  },
+  {
+    id: 'community_garden',
+    title: 'Community Garden Share',
+    description: 'A community garden in your neighborhood offers a weekly produce box: free seasonal vegetables, every Friday.',
+    apply: (S) => { S.communityGarden = true; }
+  }
+];
+
+// ===== GAME STATE =====
+const G = {};
+
+G.STATE = null;
+
+G.init = function() {
+  // Build char grid
+  const grid = document.getElementById('char-grid');
+  grid.innerHTML = '';
+  Object.values(CHARACTERS).forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'char-card';
+    div.innerHTML = `
+      <h3>${c.name}</h3>
+      <div class="char-meta">Age ${c.age} &bull; ${c.hasCar ? 'Has car' : 'No car'}</div>
+      <p>${c.role}</p>
+      <p class="mt8 text-sm">SNAP: <span class="text-green">$${c.snap}/mo</span> &bull; Take-home: <span class="text-amber">$${c.income}/mo</span></p>
+      <div class="challenge">${c.challenge}</div>
+    `;
+    div.onclick = () => G.startGame(c.id);
+    grid.appendChild(div);
+  });
+};
+
+G.showCharSelect = function() {
+  G.showScreen('char-select-screen');
+};
+
+G.startGame = function(charId) {
+  const c = CHARACTERS[charId];
+  G.STATE = {
+    characterId: charId,
+    character: c,
+    week: 1,
+    day: 1,
+    phase: 'morning',
+    snap: c.snap,
+    cash: Math.round(c.income / 2),
+    energy: c.startEnergy,
+    stress: c.startStress,
+    health: c.startHealth,
+    todayNutrition: 0,
+    todaySpent: 0,
+    todayEvents: [],
+    weekNutrition: [],
+    pantry: [
+      { id: 'bread', name: 'Bread', servings: 6, nutrition: 50, expiresDay: 8 },
+      { id: 'peanut_butter', name: 'Peanut Butter', servings: 8, nutrition: 65, expiresDay: 120 },
+      { id: 'rice', name: 'Rice', servings: 4, nutrition: 45, expiresDay: 90 }
+    ],
+    dayStart: null,
+    couponActive: false,
+    saleItem: null,
+    saleItem2: null,
+    freeTransit: false,
+    snapProduceMatch: false,
+    communityGarden: false,
+    systemFlipUnlocked: false,
+    systemFlipActive: [],
+    stats: {
+      dayNum: 0,
+      cornerVisits: 0,
+      groceryVisits: 0,
+      dollarVisits: 0,
+      fastFoodCount: 0,
+      missedMeals: 0,
+      convenienceCount: 0,
+      highStressDays: 0,
+      stressChoiceCount: 0,
+      transitHours: 0,
+      startHealth: c.startHealth
+    },
+    revealedForces: [],
+    pendingReveal: null,
+    log: [],
+    week1Snapshot: null,
+    week2Snapshot: null,
+    cart: [],
+    currentStore: 'pak'
+  };
+
+  G.showScreen('game-screen');
+  G.startDay();
+};
+
+G.startDay = function() {
+  const S = G.STATE;
+  S.todayNutrition = 0;
+  S.todaySpent = 0;
+  S.todayEvents = [];
+  S.stats.dayNum++;
+
+  // Community garden bonus on Fridays (day 5, 12, 19)
+  if (S.communityGarden && [5,12,19].includes(S.day)) {
+    S.pantry.push({ id: 'spinach', name: 'Garden Produce', servings: 5, nutrition: 85, expiresDay: S.day + 6 });
+    S.log.push(`Day ${S.day}: Community garden produce collected.`);
+  }
+
+  // Spoil check
+  S.pantry = S.pantry.filter(item => item.expiresDay > S.day);
+
+  S.dayStart = { energy: S.energy, stress: S.stress, health: S.health };
+  if (S.stress >= 70) S.stats.highStressDays++;
+
+  // Check for pending reveal from yesterday
+  S.pendingReveal = null;
+  for (const force of Object.values(HIDDEN_FORCES)) {
+    if (force.trigger(S, S.character) && !S.revealedForces.includes(force.id)) {
+      S.pendingReveal = force.id;
+      break;
+    }
+  }
+
+  S.phase = 'morning';
+  G.updateHUD();
+  G.renderMorning();
+};
+
+G.renderMorning = function() {
+  const S = G.STATE;
+  const hasPantryFood = S.pantry.length > 0;
+  const c = S.character;
+
+  const pantryList = S.pantry.slice(0, 3).map(i =>
+    `<span class="tag tag-week3">${i.name}</span>`
+  ).join(' ');
+
+  let content = `
+    <div class="phase-label mono">Day ${S.day} &bull; Morning</div>
+    ${G.renderRevealBanner()}
+    <div class="narrative-card">
+      <h2>Morning &mdash; Breakfast &amp; Lunch</h2>
+      <p>Day ${S.day} of ${S.week <= 2 ? 'your baseline weeks' : 'Week 3 (with interventions)'}. 
+      ${S.energy < 40 ? 'You woke up exhausted.' : S.energy > 70 ? 'You slept reasonably.' : 'Another early morning.'}
+      ${S.pantry.length > 0 ? `Pantry: ${pantryList}` : 'Your pantry is empty.'}
+      </p>
+      ${S.stress > 65 ? '<p style="color:var(--text-dim);font-style:italic">You feel the weight of things before the day has even started.</p>' : ''}
+    </div>
+    <div class="choices">
+  `;
+
+  // Morning choices
+  const choices = [];
+
+  if (hasPantryFood) {
+    choices.push({
+      text: 'Cook from pantry (saves money, costs time)',
+      cost: 'Free &bull; 20-30 min &bull; +nutrition',
+      action: 'G._choices[0]()'
+    });
+  }
+
+  choices.push({
+    text: 'Corner store run for something quick',
+    cost: `~$${(3 + Math.random() * 2).toFixed(2)} SNAP &bull; 5 min &bull; low nutrition`,
+    action: 'G._choices[1]()'
+  });
+
+  if (c.hasCar) {
+    choices.push({
+      text: 'Food truck near the worksite (weekdays)',
+      cost: '$8-10 cash &bull; convenient &bull; moderate nutrition',
+      action: 'G._choices[2]()'
+    });
+  }
+
+  choices.push({
+    text: 'Skip breakfast and lunch (save it)',
+    cost: 'Free &bull; energy -15 &bull; stress +8',
+    action: 'G._choices[3]()'
+  });
+
+  G._choices = [
+    // Cook from pantry
+    () => {
+      const item = S.pantry.find(i => i.servings > 0);
+      if (item) {
+        item.servings--;
+        if (item.servings <= 0) S.pantry = S.pantry.filter(i => i !== item);
+        S.energy = Math.min(100, S.energy + 5);
+        S.todayNutrition += item.nutrition;
+        S.log.push(`Day ${S.day}: Cooked from pantry (${item.name}).`);
+      }
+      G.goToEvent();
+    },
+    // Corner store
+    () => {
+      const cost = +(3 + Math.random() * 2).toFixed(2);
+      const snapCost = Math.min(cost, S.snap);
+      S.snap -= snapCost;
+      S.cash -= Math.max(0, cost - snapCost);
+      S.todayNutrition += 20;
+      S.todaySpent += cost;
+      S.stats.cornerVisits++;
+      S.stats.convenienceCount++;
+      S.log.push(`Day ${S.day}: Corner store breakfast ($${cost.toFixed(2)}).`);
+      G.goToEvent();
+    },
+    // Food truck
+    () => {
+      S.cash -= 9;
+      S.todayNutrition += 45;
+      S.todaySpent += 9;
+      S.stats.convenienceCount++;
+      S.log.push(`Day ${S.day}: Food truck lunch ($9).`);
+      G.goToEvent();
+    },
+    // Skip
+    () => {
+      S.energy = Math.max(0, S.energy - 15);
+      S.stress = Math.min(100, S.stress + 8);
+      S.stats.missedMeals++;
+      S.log.push(`Day ${S.day}: Skipped breakfast/lunch.`);
+      G.goToEvent();
+    }
+  ];
+
+  choices.forEach((ch, i) => {
+    content += `
+      <button class="choice-btn" onclick="${ch.action}">
+        <div class="choice-text">${ch.text}</div>
+        <div class="choice-cost">${ch.cost}</div>
+      </button>
+    `;
+  });
+
+  content += `</div>`;
+  G.setContent(content);
+  G.updateHUD();
+};
+
+G.goToEvent = function() {
+  const S = G.STATE;
+  S.phase = 'event';
+  G.updateHUD();
+
+  // Get today's event
+  const forced = G.getForcedEvent();
+  const event = forced || G.getRandomEvent();
+
+  if (!event) {
+    G.goToEvening();
+    return;
+  }
+
+  S.todayEvents.push(event.id);
+
+  // Apply immediate effect
+  if (event.apply) {
+    event.apply(S, S.character);
+  }
+
+  let content = `
+    <div class="phase-label mono">Day ${S.day} &bull; Midday Event</div>
+    <div class="narrative-card">
+      <h2>${event.title}</h2>
+      <p>${typeof event.text === 'function' ? event.text(S.character) : event.text}</p>
+    </div>
+  `;
+
+  if (event.choices) {
+    content += `<div class="choices">`;
+    G._eventChoices = event.choices;
+    event.choices.forEach((ch, i) => {
+      content += `
+        <button class="choice-btn" onclick="G._applyEventChoice(${i})">
+          <div class="choice-text">${ch.text}</div>
+        </button>
+      `;
+    });
+    content += `</div>`;
+  } else {
+    content += `<button class="btn mt16" onclick="G.goToEvening()">Continue to evening &rarr;</button>`;
+  }
+
+  G.setContent(content);
+  G.updateHUD();
+};
+
+G._applyEventChoice = function(idx) {
+  const S = G.STATE;
+  const ch = G._eventChoices[idx];
+  if (ch.apply) ch.apply(S, S.character);
+  G.goToEvening();
+};
+
+G.getForcedEvent = function() {
+  const S = G.STATE;
+  const d = S.day;
+  if (d === 3 && !S.todayEvents.includes('utility_bill')) return EVENTS.find(e => e.id === 'utility_bill');
+  if ((d === 7 || d === 14) && !S.todayEvents.includes('payday')) return EVENTS.find(e => e.id === 'payday');
+  if (d === 21 && !S.todayEvents.includes('quiet_day')) return EVENTS.find(e => e.id === 'quiet_day');
+  return null;
+};
+
+G.getRandomEvent = function() {
+  const S = G.STATE;
+  const c = S.character;
+  let pool = EVENTS.filter(e => {
+    if (e.forced) return false;
+    if (S.todayEvents.includes(e.id)) return false;
+    if (e.charFilter && !e.charFilter.includes(c.id)) return false;
+    if (e.weight === 0) return false;
+    return true;
+  });
+
+  const total = pool.reduce((sum, e) => sum + e.weight, 0);
+  let rand = Math.random() * total;
+  for (const e of pool) {
+    rand -= e.weight;
+    if (rand <= 0) return e;
+  }
+  return pool[0] || null;
+};
+
+G.goToEvening = function() {
+  const S = G.STATE;
+  S.phase = 'evening';
+  G.updateHUD();
+
+  const hasPantryFood = S.pantry.length > 0;
+
+  let content = `
+    <div class="phase-label mono">Day ${S.day} &bull; Evening &mdash; Dinner &amp; Shopping</div>
+    <div class="narrative-card">
+      <h2>Evening</h2>
+      <p>${S.energy < 35 ? 'You\'re running on fumes.' : S.energy < 55 ? 'You\'re tired but functional.' : 'You have some energy left.'}
+      ${S.todayNutrition < 30 ? 'You\'ve barely eaten today.' : S.todayNutrition < 60 ? 'You had something but not much.' : 'Today\'s meals were decent.'}
+      ${S.pantry.length > 0 ? `Pantry has ${S.pantry.length} item(s).` : 'Pantry is empty.'}
+      </p>
+    </div>
+    <div class="choices">
+  `;
+
+  G._eveningChoices = [
+    // Cook from pantry
+    () => {
+      if (S.pantry.length > 0) {
+        const item = S.pantry.find(i => i.servings > 0);
+        if (item) {
+          item.servings -= 2;
+          if (item.servings <= 0) S.pantry = S.pantry.filter(i => i !== item);
+          S.todayNutrition += item.nutrition;
+          S.energy = Math.min(100, S.energy + 8);
+        }
+        S.log.push(`Day ${S.day}: Home-cooked dinner.`);
+      }
+      G.endDay();
+    },
+    // Shopping
+    () => { G.openShop(); },
+    // Fast food
+    () => {
+      S.cash = Math.max(0, S.cash - 8.99);
+      S.todayNutrition += 30;
+      S.todaySpent += 8.99;
+      S.stats.fastFoodCount++;
+      S.stats.convenienceCount++;
+      S.log.push(`Day ${S.day}: Fast food dinner ($8.99 cash).`);
+      G.endDay();
+    },
+    // Skip dinner
+    () => {
+      S.energy = Math.max(0, S.energy - 12);
+      S.stress = Math.min(100, S.stress + 8);
+      S.stats.missedMeals++;
+      S.log.push(`Day ${S.day}: Skipped dinner.`);
+      G.endDay();
+    }
+  ];
+
+  const eveningChoices = [
+    { text: `Cook from pantry (${S.pantry.length} items available)`, cost: 'Free &bull; 30 min &bull; good nutrition', disabled: S.pantry.length === 0 },
+    { text: 'Go shopping (restock)', cost: 'SNAP + cash &bull; see store options', disabled: false },
+    { text: 'Fast food on the way home', cost: '$8.99 cash &bull; SNAP not accepted &bull; convenient', disabled: false },
+    { text: 'Skip dinner tonight', cost: 'Free &bull; energy -12 &bull; stress +8', disabled: false }
+  ];
+
+  eveningChoices.forEach((ch, i) => {
+    const cls = ch.disabled ? 'choice-btn' : 'choice-btn';
+    content += `
+      <button class="${cls}" onclick="G._eveningChoices[${i}]()" ${ch.disabled ? 'style="opacity:0.4;cursor:not-allowed;" disabled' : ''}>
+        <div class="choice-text">${ch.text}</div>
+        <div class="choice-cost">${ch.cost}</div>
+      </button>
+    `;
+  });
+
+  content += `</div>`;
+  G.setContent(content);
+  G.updateHUD();
+};
+
+G.endDay = function() {
+  const S = G.STATE;
+  G.closeShop();
+
+  // Overnight recovery
+  const nutritionBonus = S.todayNutrition >= 80 ? 8 : S.todayNutrition >= 50 ? 4 : -2;
+  S.energy = Math.min(100, S.energy + 18 + nutritionBonus);
+  S.stress = Math.max(0, S.stress - 5);
+
+  // Health update
+  const healthDelta = S.todayNutrition >= 70 ? 0.4 : S.todayNutrition >= 40 ? 0.1 : -0.4;
+  S.health = Math.max(0, Math.min(100, S.health + healthDelta));
+
+  S.weekNutrition.push(S.todayNutrition);
+
+  G.showRecap();
+};
+
+G.showRecap = function() {
+  const S = G.STATE;
+  const nutrition = S.todayNutrition;
+  const nutritionColor = nutrition >= 70 ? 'text-green' : nutrition >= 40 ? 'text-amber' : 'text-red';
+  const energyChange = S.energy - S.dayStart.energy;
+  const healthChange = (S.health - S.dayStart.health).toFixed(1);
+
+  let content = `
+    <div class="phase-label mono">Day ${S.day} &bull; End of Day</div>
+    <div class="recap-card">
+      <h2>Day ${S.day} Complete</h2>
+      <div class="recap-stats">
+        <div class="recap-stat">
+          <span class="recap-stat-val ${nutritionColor}">${Math.round(nutrition)}%</span>
+          <span class="recap-stat-label">Nutrition</span>
+        </div>
+        <div class="recap-stat">
+          <span class="recap-stat-val ${energyChange >= 0 ? 'text-green' : 'text-red'}">${energyChange >= 0 ? '+' : ''}${Math.round(energyChange)}</span>
+          <span class="recap-stat-label">Energy Change</span>
+        </div>
+        <div class="recap-stat">
+          <span class="recap-stat-val">${S.todaySpent > 0 ? '$' + S.todaySpent.toFixed(2) : '$0'}</span>
+          <span class="recap-stat-label">Food Spent</span>
+        </div>
+      </div>
+      <p class="text-dim text-sm">${nutrition < 40 ? 'Today\'s food didn\'t cover your nutritional needs. Repeated days like this have cumulative effects.' : nutrition < 70 ? 'Adequate but not optimal nutrition today.' : 'Good nutritional day.'}</p>
+    </div>
+  `;
+
+  // Check if week ends
+  if (S.day === 7 || S.day === 14) {
+    content += `<button class="btn btn-full mt16" onclick="G.showWeekSummary()">View Week ${S.week} Summary &rarr;</button>`;
+  } else if (S.day === 21) {
+    content += `<button class="btn btn-full mt16" onclick="G.showEndScreen()">See Final Results &rarr;</button>`;
+  } else {
+    content += `<button class="btn btn-full mt16" onclick="G.nextDay()">Day ${S.day + 1} &rarr;</button>`;
+  }
+
+  G.setContent(content);
+};
+
+G.nextDay = function() {
+  const S = G.STATE;
+  S.couponActive = false;
+  S.saleItem = null;
+  S.saleItem2 = null;
+  S.day++;
+  S.week = Math.ceil(S.day / 7);
+  G.updateHUD();
+  G.startDay();
+};
+
+G.showWeekSummary = function() {
+  const S = G.STATE;
+  const weekNum = S.week;
+  const nutrition = S.weekNutrition.slice(-7);
+  const avgNutrition = Math.round(nutrition.reduce((a,b) => a+b, 0) / nutrition.length);
+  const snapshot = {
+    health: Math.round(S.health),
+    avgNutrition,
+    missedMeals: S.stats.missedMeals,
+    cornerVisits: S.stats.cornerVisits,
+    fastFoodCount: S.stats.fastFoodCount,
+    transitHours: S.stats.transitHours.toFixed(1),
+    snap: S.snap.toFixed(2),
+    cash: S.cash.toFixed(2)
+  };
+
+  if (weekNum === 1) S.week1Snapshot = snapshot;
+  else if (weekNum === 2) S.week2Snapshot = snapshot;
+
+  const storeVisits = {
+    corner: S.stats.cornerVisits,
+    dollar: S.stats.dollarVisits,
+    grocery: S.stats.groceryVisits
+  };
+
+  let content = `
+    <div class="section-header">
+      <div>
+        <div class="step-label">Week ${weekNum} Complete</div>
+        <h2>${weekNum === 2 ? 'Preparing for System Change' : 'Baseline Established'}</h2>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h3>This Week's Numbers</h3>
+      <div class="recap-stats">
+        <div class="recap-stat">
+          <span class="recap-stat-val">${avgNutrition}%</span>
+          <span class="recap-stat-label">Avg Nutrition</span>
+        </div>
+        <div class="recap-stat">
+          <span class="recap-stat-val">${S.stats.missedMeals}</span>
+          <span class="recap-stat-label">Skipped Meals</span>
+        </div>
+        <div class="recap-stat">
+          <span class="recap-stat-val">${Math.round(S.health)}</span>
+          <span class="recap-stat-label">Health Score</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h3>Where You Shopped</h3>
+      <div class="mono-sm text-dim">
+        <p>Corner store visits: <span class="text-amber">${storeVisits.corner}</span></p>
+        <p>Dollar Deals visits: <span class="text-text">${storeVisits.dollar}</span></p>
+        <p>Metro Grocery visits: <span class="text-steel">${storeVisits.grocery}</span></p>
+        <p>Fast food: <span class="${S.stats.fastFoodCount > 0 ? 'text-red' : 'text-dim'}">${S.stats.fastFoodCount}</span></p>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h3>Resources Remaining</h3>
+      <div class="mono-sm">
+        <p>SNAP balance: <span class="text-green">$${S.snap.toFixed(2)}</span></p>
+        <p>Cash remaining: <span class="text-amber">$${S.cash.toFixed(2)}</span></p>
+      </div>
+    </div>
+  `;
+
+  if (weekNum === 1) {
+    content += `
+      <p class="text-dim text-sm mt16 italic">Week 1 established your baseline. These conditions — store access, transit time, pricing, income — are what researchers call "social determinants of food behavior." Week 2 continues in the same conditions.</p>
+      <button class="btn btn-full mt16" onclick="G.continueToWeek2()">Begin Week 2 &rarr;</button>
+    `;
+  } else if (weekNum === 2) {
+    content += `
+      <p class="text-dim text-sm mt16 italic">Two weeks of baseline data. Now you get to change the system, not yourself. Choose your intervention for Week 3.</p>
+      <button class="btn btn-full mt16" onclick="G.showSystemFlip()">Choose System Interventions &rarr;</button>
+    `;
+  }
+
+  G.setContent(content);
+};
+
+G.continueToWeek2 = function() {
+  G.nextDay();
+};
+
+G.showSystemFlip = function() {
+  const S = G.STATE;
+
+  let content = `
+    <div class="section-header">
+      <div>
+        <div class="step-label">System Flip</div>
+        <h2>Change the Structure, Not the Person</h2>
+      </div>
+    </div>
+    <p class="text-dim text-sm mb16">You didn't change who ${S.character.name} is or what she values. You changed what's available to her. Choose one intervention for Week 3. Watch what happens to the numbers.</p>
+    <div class="flip-options" id="flip-options">
+  `;
+
+  SYSTEM_FLIPS.forEach((flip, i) => {
+    content += `
+      <div class="flip-card" id="flip-${flip.id}" onclick="G.selectFlip('${flip.id}')">
+        <h3>${flip.title}</h3>
+        <p>${flip.description}</p>
+      </div>
+    `;
+  });
+
+  content += `
+    </div>
+    <button class="btn btn-full mt16" id="flip-btn" onclick="G.applyFlipAndContinue()" style="display:none;">Begin Week 3 with Intervention &rarr;</button>
+  `;
+
+  G.setContent(content);
+  G._selectedFlip = null;
+};
+
+G.selectFlip = function(flipId) {
+  G._selectedFlip = flipId;
+  document.querySelectorAll('.flip-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById('flip-' + flipId).classList.add('selected');
+  document.getElementById('flip-btn').style.display = 'block';
+};
+
+G.applyFlipAndContinue = function() {
+  const S = G.STATE;
+  if (!G._selectedFlip) return;
+
+  const flip = SYSTEM_FLIPS.find(f => f.id === G._selectedFlip);
+  flip.apply(S, S.character);
+  S.systemFlipActive.push(flip.id);
+
+  // Reset SNAP for week 3
+  S.snap = S.character.snap;
+  S.day = 15;
+  S.week = 3;
+
+  G.updateHUD();
+  G.startDay();
+};
+
+G.showEndScreen = function() {
+  const S = G.STATE;
+  const w1 = S.week1Snapshot || {};
+  const w2 = S.week2Snapshot || {};
+  const w3 = {
+    health: Math.round(S.health),
+    avgNutrition: Math.round(S.weekNutrition.slice(-7).reduce((a,b)=>a+b,0) / 7),
+    missedMeals: S.stats.missedMeals - (w1.missedMeals || 0) - (w2.missedMeals || 0),
+    cornerVisits: S.stats.cornerVisits - (w1.cornerVisits || 0) - (w2.cornerVisits || 0),
+    fastFoodCount: S.stats.fastFoodCount - (w1.fastFoodCount || 0) - (w2.fastFoodCount || 0)
+  };
+
+  const baselineNutrition = Math.round(((w1.avgNutrition||50) + (w2.avgNutrition||50)) / 2);
+  const nutritionDiff = w3.avgNutrition - baselineNutrition;
+  const healthDiff = w3.health - (w2.health || S.stats.startHealth);
+  const mealsDiff = w3.missedMeals - Math.round(((w1.missedMeals||0) + (w2.missedMeals||0)) / 2);
+  const cornerDiff = w3.cornerVisits - Math.round(((w1.cornerVisits||0) + (w2.cornerVisits||0)) / 2);
+
+  const flip = SYSTEM_FLIPS.find(f => S.systemFlipActive.includes(f.id));
+
+  let content = `
+    <div class="section-header">
+      <div>
+        <div class="step-label">Simulation Complete</div>
+        <h2>The Data Speaks</h2>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h3>Before Intervention (Weeks 1-2) vs. After (Week 3)</h3>
+      <div class="comparison-grid">
+        <div class="compare-col">
+          <h3>Weeks 1-2 Baseline</h3>
+          <div class="compare-row"><span class="compare-label">Avg Nutrition</span><span class="compare-val">${baselineNutrition}%</span></div>
+          <div class="compare-row"><span class="compare-label">Health Score</span><span class="compare-val">${w2.health || '—'}</span></div>
+          <div class="compare-row"><span class="compare-label">Skipped Meals</span><span class="compare-val">${Math.round(((w1.missedMeals||0) + (w2.missedMeals||0)) / 2)}/wk</span></div>
+          <div class="compare-row"><span class="compare-label">Corner Store Trips</span><span class="compare-val">${Math.round(((w1.cornerVisits||0) + (w2.cornerVisits||0)) / 2)}/wk</span></div>
+        </div>
+        <div class="compare-col">
+          <h3>Week 3 with Intervention</h3>
+          <div class="compare-row"><span class="compare-label">Avg Nutrition</span><span class="compare-val ${nutritionDiff >= 0 ? 'compare-better' : 'compare-worse'}">${w3.avgNutrition}% (${nutritionDiff >= 0 ? '+' : ''}${nutritionDiff})</span></div>
+          <div class="compare-row"><span class="compare-label">Health Score</span><span class="compare-val ${healthDiff >= 0 ? 'compare-better' : 'compare-worse'}">${w3.health} (${healthDiff >= 0 ? '+' : ''}${healthDiff.toFixed(1)})</span></div>
+          <div class="compare-row"><span class="compare-label">Skipped Meals</span><span class="compare-val ${mealsDiff <= 0 ? 'compare-better' : 'compare-worse'}">${w3.missedMeals}/wk</span></div>
+          <div class="compare-row"><span class="compare-label">Corner Store Trips</span><span class="compare-val ${cornerDiff <= 0 ? 'compare-better' : 'compare-worse'}">${w3.cornerVisits}/wk</span></div>
+        </div>
+      </div>
+    </div>
+
+    ${flip ? `
+    <div class="data-reveal mt16">
+      <h3>Intervention: ${flip.title}</h3>
+      <p>${flip.description}</p>
+    </div>
+    ` : ''}
+
+    <div class="final-insight">
+      <p>${nutritionDiff > 5 || healthDiff > 2 ? `${S.character.name}'s nutrition improved in Week 3. Her choices changed too. But she didn't change. The system around her did.` : `Even with the intervention, some barriers remain. Systems are layered. One change rarely fixes everything.`}</p>
+      <p class="mt16">If your behavior changed during Week 3, that change belongs to the intervention, not to you. The same person, in a different environment, eats differently. This is what public health researchers have documented for decades. Food behavior is shaped by the system, not by character.</p>
+      <p class="mt16">What changes when a grocery store opens nearby? When transit is free? When produce gets cheaper? The answers are in the data, and they've been available for years. The question is which interventions we choose to build.</p>
+    </div>
+
+    <div class="summary-section">
+      <h3>Hidden Forces Revealed This Session</h3>
+      <p class="text-dim text-sm">${S.revealedForces.length} of 8 structural forces uncovered.</p>
+      ${S.revealedForces.map(id => {
+        const f = HIDDEN_FORCES[id];
+        return f ? `<p class="mono-sm text-dim mt8">&bull; ${f.title}</p>` : '';
+      }).join('')}
+    </div>
+
+    <div class="mt24">
+      <button class="btn" onclick="G.init(); G.showScreen('char-select-screen')">Play Again (Different Household)</button>
+      <button class="btn btn-dim mt8" onclick="G.showScreen('title-screen')">Return to Start</button>
+    </div>
+  `;
+
+  G.setContent(content);
+};
+
+// ===== SHOPPING =====
+
+G.openShop = function() {
+  const S = G.STATE;
+  S.cart = [];
+  S.currentStore = 'pak';
+  G.renderShop();
+  document.getElementById('shopping-modal').style.display = 'flex';
+};
+
+G.closeShop = function() {
+  document.getElementById('shopping-modal').style.display = 'none';
+};
+
+G.renderShop = function() {
+  const S = G.STATE;
+  const storeList = ['pak', 'dollar', 'metro'];
+  if (S.systemFlipActive.includes('new_grocery') && STORES.nearby) storeList.push('nearby');
+
+  // Store tabs
+  const tabs = document.getElementById('store-tabs');
+  tabs.innerHTML = storeList.map(sId => {
+    const st = STORES[sId];
+    return `<button class="store-tab ${S.currentStore === sId ? 'active' : ''}" onclick="G.selectStore('${sId}')">${st.name.split(' ')[0]}</button>`;
+  }).join('');
+
+  G.renderStoreContent();
+};
+
+G.selectStore = function(storeId) {
+  G.STATE.currentStore = storeId;
+  G.renderShop();
+};
+
+G.renderStoreContent = function() {
+  const S = G.STATE;
+  const store = STORES[S.currentStore];
+  const c = S.character;
+
+  let transitCost = store.transitCost * 2; // round trip
+  if (S.freeTransit) transitCost = 0;
+
+  const details = document.getElementById('store-details');
+  details.innerHTML = `
+    <div class="store-info">
+      <span>Transit: <span>${store.transitTime === 0 ? 'Walking' : store.transitTime + ' hrs'}</span></span>
+      <span>Fare: <span>${transitCost === 0 ? 'Free' : '$' + transitCost.toFixed(2)}</span></span>
+      <span>Prices: <span>${store.multiplier < 1 ? 'Below avg' : store.multiplier > 1.4 ? 'High' : 'Moderate'}</span></span>
+      <span>SNAP: <span>${store.snapAccepted ? 'Yes' : 'No'}</span></span>
+    </div>
+    <p class="text-dim text-sm" style="margin-bottom:12px;font-style:italic;">${store.description}</p>
+  `;
+
+  // Track transit
+  S.stats.transitHours += store.transitTime;
+  if (S.currentStore === 'pak') S.stats.cornerVisits++;
+  else if (S.currentStore === 'dollar') S.stats.dollarVisits++;
+  else if (S.currentStore === 'metro' || S.currentStore === 'nearby') S.stats.groceryVisits++;
+
+  // Food items
+  const grid = document.getElementById('food-grid');
+  grid.innerHTML = '';
+
+  store.availableItems.forEach(foodId => {
+    const food = FOODS[foodId];
+    if (!food) return;
+
+    let price = +(food.basePrice * store.multiplier).toFixed(2);
+    if (S.couponActive && food.category === 'produce') price = +(price - 1.50).toFixed(2);
+    if ((foodId === S.saleItem || foodId === S.saleItem2) && S.currentStore === 'dollar') price = +(price * 0.7).toFixed(2);
+    if (S.snapProduceMatch && food.category === 'produce' && store.snapAccepted && food.snapOk) price = +(price * 0.5).toFixed(2);
+
+    price = Math.max(0.10, price);
+
+    const inCart = S.cart.find(i => i.foodId === foodId);
+    const div = document.createElement('div');
+    div.className = 'food-item' + (inCart ? ' in-cart' : '');
+    div.innerHTML = `
+      <div class="food-item-name">${food.name}</div>
+      <div class="food-item-meta">
+        <span class="food-price">$${price.toFixed(2)}</span>
+        <span class="food-nutrition">Nutrition: ${food.nutrition}%</span>
+      </div>
+      <div class="food-item-meta text-dim" style="font-size:0.65rem;">
+        ${food.servings} servings &bull; ${food.category}
+      </div>
+    `;
+    div.onclick = () => G.toggleCartItem(foodId, price, food);
+    grid.appendChild(div);
+  });
+
+  G.renderCart();
+};
+
+G.toggleCartItem = function(foodId, price, food) {
+  const S = G.STATE;
+  const idx = S.cart.findIndex(i => i.foodId === foodId);
+  if (idx >= 0) {
+    S.cart.splice(idx, 1);
+  } else {
+    S.cart.push({ foodId, name: food.name, price, nutrition: food.nutrition, servings: food.servings, shelf: food.shelf, snapOk: food.snapOk && STORES[S.currentStore].snapAccepted });
+  }
+  G.renderStoreContent();
+};
+
+G.renderCart = function() {
+  const S = G.STATE;
+  const items = document.getElementById('cart-items');
+  const total = document.getElementById('cart-total');
+  const btn = document.getElementById('checkout-btn');
+
+  if (S.cart.length === 0) {
+    items.innerHTML = '<p class="text-dim mono-sm">Cart is empty</p>';
+    total.innerHTML = '';
+    return;
+  }
+
+  items.innerHTML = S.cart.map((item, i) => `
+    <div class="cart-item">
+      <span>${item.name}</span>
+      <span>
+        $${item.price.toFixed(2)}
+        <span class="cart-item-remove" onclick="G.removeCartItem(${i})">&times;</span>
+      </span>
+    </div>
+  `).join('');
+
+  const snapItems = S.cart.filter(i => i.snapOk);
+  const cashItems = S.cart.filter(i => !i.snapOk);
+  const snapTotal = +snapItems.reduce((s, i) => s + i.price, 0).toFixed(2);
+  const cashTotal = +cashItems.reduce((s, i) => s + i.price, 0).toFixed(2);
+
+  const store = STORES[S.currentStore];
+  let transitCost = store.transitCost * 2;
+  if (S.freeTransit) transitCost = 0;
+
+  const snapUsed = Math.min(snapTotal, S.snap);
+  const snapOverflow = Math.max(0, snapTotal - snapUsed);
+  const totalCash = +(cashTotal + snapOverflow + transitCost).toFixed(2);
+
+  total.innerHTML = `
+    <span>SNAP: <span class="cart-snap">-$${snapUsed.toFixed(2)}</span></span>
+    <span>Cash: <span class="cart-cash">-$${totalCash.toFixed(2)}</span></span>
+  `;
+
+  btn.disabled = (S.snap < snapUsed || S.cash < totalCash);
+};
+
+G.removeCartItem = function(idx) {
+  G.STATE.cart.splice(idx, 1);
+  G.renderStoreContent();
+};
+
+G.checkout = function() {
+  const S = G.STATE;
+  const store = STORES[S.currentStore];
+
+  const snapItems = S.cart.filter(i => i.snapOk);
+  const cashItems = S.cart.filter(i => !i.snapOk);
+  const snapTotal = +snapItems.reduce((s, i) => s + i.price, 0).toFixed(2);
+  const cashTotal = +cashItems.reduce((s, i) => s + i.price, 0).toFixed(2);
+
+  let transitCost = store.transitCost * 2;
+  if (S.freeTransit) transitCost = 0;
+
+  const snapUsed = Math.min(snapTotal, S.snap);
+  const snapOverflow = Math.max(0, snapTotal - snapUsed);
+  const totalCash = +(cashTotal + snapOverflow + transitCost).toFixed(2);
+
+  S.snap = +(S.snap - snapUsed).toFixed(2);
+  S.cash = +(S.cash - totalCash).toFixed(2);
+  S.todaySpent += snapUsed + totalCash;
+
+  // Add to pantry
+  S.cart.forEach(item => {
+    const existing = S.pantry.find(p => p.id === item.foodId);
+    if (existing) {
+      existing.servings += item.servings;
+    } else {
+      S.pantry.push({
+        id: item.foodId,
+        name: item.name,
+        servings: item.servings,
+        nutrition: item.nutrition,
+        expiresDay: S.day + (FOODS[item.foodId]?.shelf || 7)
+      });
+    }
+    S.todayNutrition = Math.min(100, S.todayNutrition + item.nutrition * 0.2);
+  });
+
+  S.log.push(`Day ${S.day}: Shopped at ${store.name}. SNAP: -$${snapUsed.toFixed(2)}, Cash: -$${totalCash.toFixed(2)}.`);
+  S.cart = [];
+
+  G.closeShop();
+  G.endDay();
+};
+
+// ===== HUD & RENDERING =====
+
+G.updateHUD = function() {
+  const S = G.STATE;
+  if (!S) return;
+
+  document.getElementById('hud-name').textContent = S.character.name;
+  document.getElementById('hud-day').textContent = `Week ${S.week} · Day ${S.day} · ${S.phase.charAt(0).toUpperCase() + S.phase.slice(1)}`;
+
+  const setBar = (id, val, maxVal = 100) => {
+    const pct = Math.min(100, Math.max(0, val / maxVal * 100));
+    const el = document.getElementById(id);
+    if (el) el.style.width = pct + '%';
+  };
+
+  document.getElementById('hud-energy-val').textContent = Math.round(S.energy);
+  document.getElementById('hud-health-val').textContent = Math.round(S.health);
+  document.getElementById('hud-stress-val').textContent = Math.round(S.stress);
+  document.getElementById('hud-nutrition-val').textContent = Math.round(S.todayNutrition) + '%';
+
+  setBar('hud-energy', S.energy);
+  setBar('hud-health', S.health);
+  setBar('hud-stress', S.stress);
+  setBar('hud-nutrition', S.todayNutrition);
+
+  document.getElementById('hud-snap').textContent = '$' + S.snap.toFixed(2);
+  document.getElementById('hud-cash').textContent = '$' + S.cash.toFixed(2);
+};
+
+G.renderRevealBanner = function() {
+  const S = G.STATE;
+  if (!S.pendingReveal) return '';
+
+  const force = HIDDEN_FORCES[S.pendingReveal];
+  if (!force) return '';
+
+  S.revealedForces.push(force.id);
+  S.pendingReveal = null;
+
+  const borderColor = force.color === 'amber' ? 'var(--amber-dim)' : 'var(--steel-dim)';
+
+  return `
+    <div class="data-reveal" style="border-color:${borderColor}">
+      <h3>${force.title}</h3>
+      <p>${force.text}</p>
+    </div>
+  `;
+};
+
+G.setContent = function(html) {
+  const el = document.getElementById('game-content');
+  if (el) el.innerHTML = html;
+};
+
+G.showScreen = function(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) target.classList.add('active');
+};
+
+// Init on load
+window.addEventListener('DOMContentLoaded', () => {
+  G.init();
+  G.showScreen('title-screen');
+});
+</script>
+</body>
+</html>
